@@ -6,7 +6,7 @@ test/
 !**/src/test/**/target/
 ###　不要把application-local.yaml文件上传到git
 
-*.yml
+*.yaml
 
 ### STS ###
 .apt_generated
