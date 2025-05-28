@@ -5,7 +5,9 @@ test/
 !**/src/main/**/target/
 !**/src/test/**/target/
 ###　不要把application-local.yaml文件上传到git
-src/main/resources/application-local.yaml
+
+*.yml
+
 ### STS ###
 .apt_generated
 .classpath
