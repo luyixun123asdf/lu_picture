@@ -3,6 +3,8 @@ server:
   servlet:
     context-path: /api
 
+
+
 spring:
   application:
     name: lu-picture-backend
@@ -11,3 +13,34 @@ spring:
     url: ${spring.datasource.url}
     username: ${spring.datasource.username}
     password: ${spring.datasource.password}
+  profiles:
+    active: local
+
+mybatis-plus:
+  configuration:
+    # MyBatis 配置
+    map-underscore-to-camel-case: false
+    #  日志实现
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete #逻辑删除字段名
+      logic-delete-value: 1 # 逻辑已删除值
+      logic-not-delete-value: 0
+knife4j:
+
+  enable: true
+  openapi:
+    title: 接口文档
+    email: xiaoymin@foxmail.com
+
+    version: 1.0
+    group:
+      test1:
+        group-name: 分组名称
+        api-rule: package
+        api-rule-resources:
+          - com.lu.lupicturebackend.controller
+
+
+
