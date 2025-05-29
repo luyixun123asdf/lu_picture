@@ -36,8 +36,7 @@ knife4j:
 
     version: 1.0
     group:
-      test1:
-        group-name: 分组名称
+      default:
         api-rule: package
         api-rule-resources:
           - com.lu.lupicturebackend.controller

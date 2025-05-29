@@ -7,6 +7,7 @@ public class ThrowUtils {
 
     /**
      * 条件成立则抛异常
+     *
      * @param condition
      * @param runtimeException
      */
@@ -16,8 +17,10 @@ public class ThrowUtils {
             throw runtimeException;
         }
     }
+
     /**
      * 条件成立则抛异常
+     *
      * @param condition
      * @param errorCode
      */

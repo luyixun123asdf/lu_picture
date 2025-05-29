@@ -1,4 +1,5 @@
 package com.lu.lupicturebackend.common;
+
 import com.lu.lupicturebackend.exception.ErrorCode;
 
 /**
@@ -7,9 +8,10 @@ import com.lu.lupicturebackend.exception.ErrorCode;
 public class ResultUtils {
     /**
      * 封装成功返回
+     *
      * @param data
-     * @return
      * @param <T>
+     * @return
      */
     public static <T> BaseResponse<T> success(T data) {
         return new BaseResponse<>(0, data, "ok");
@@ -17,6 +19,7 @@ public class ResultUtils {
 
     /**
      * 封装失败返回
+     *
      * @param errorCode
      * @return
      */
@@ -26,6 +29,7 @@ public class ResultUtils {
 
     /**
      * 封装失败返回自定义错误信息
+     *
      * @param errorCode
      * @param message
      * @return
@@ -35,7 +39,6 @@ public class ResultUtils {
     }
 
     /**
-     *
      * @param code
      * @param message
      * @return

@@ -8,8 +8,10 @@ import java.io.Serializable;
 
 /**
  * 统一返回类
+ *
  * @param <T>
  */
+
 @Data
 public class BaseResponse<T> implements Serializable {
 
