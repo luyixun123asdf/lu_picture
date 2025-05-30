@@ -1,13 +1,17 @@
 package com.lu.lupicturebackend.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lu.lupicturebackend.constant.UserConstant;
+import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
+import com.lu.lupicturebackend.model.dto.user.UserQueryRequest;
 import com.lu.lupicturebackend.model.entity.User;
 import com.lu.lupicturebackend.model.vo.LoginUserVO;
+import com.lu.lupicturebackend.model.vo.UserVO;
 import com.lu.lupicturebackend.service.UserService;
 import com.lu.lupicturebackend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author 86186
@@ -116,6 +122,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         BeanUtils.copyProperties(user, loginUserVO);
         return loginUserVO;
     }
+
+    @Override
+    public UserVO getUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        ;
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
+
+    @Override
+    public List<UserVO> getUserVOList(List<User> userList) {
+        if (CollUtil.isEmpty(userList)) {
+            return null;
+        }
+        return userList.stream()
+                .map(user -> getUserVO(user))
+                .collect(Collectors.toList());
+    }
+
     /**
      * 获取当前登录用户
      *
@@ -126,7 +154,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User getLoginUser(HttpServletRequest request) {
         Object attribute = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
         User currentUser = (User) attribute;
-        if (currentUser == null ||  currentUser.getId() == null) {
+        if (currentUser == null || currentUser.getId() == null) {
             ThrowUtils.throwIf(true, ErrorCode.NOT_LOGIN_ERROR);
         }
         currentUser = this.getById(currentUser.getId());
@@ -137,12 +165,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public boolean userLogout(HttpServletRequest request) {
         Object attribute = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
-        if (attribute == null){
+        if (attribute == null) {
             ThrowUtils.throwIf(true, ErrorCode.NOT_LOGIN_ERROR);
         }
         request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
 
         return true;
+    }
+
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,  "请求参数为空");
+        }
+        Long id = userQueryRequest.getId();
+        String userName = userQueryRequest.getUserName();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(id != null, "id", id);
+        queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+        queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+        queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+        queryWrapper.orderBy(StrUtil.isNotBlank(sortField),"ascend".equals(sortOrder),sortField);
+
+        return queryWrapper;
     }
 }
 

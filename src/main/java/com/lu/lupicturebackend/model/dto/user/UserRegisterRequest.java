@@ -1,4 +1,4 @@
-package com.lu.lupicturebackend.model.dto;
+package com.lu.lupicturebackend.model.dto.user;
 
 import lombok.Data;
 

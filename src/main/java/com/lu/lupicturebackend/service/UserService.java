@@ -1,10 +1,14 @@
 package com.lu.lupicturebackend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.lu.lupicturebackend.model.dto.user.UserQueryRequest;
 import com.lu.lupicturebackend.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lu.lupicturebackend.model.vo.LoginUserVO;
+import com.lu.lupicturebackend.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author 86186
@@ -42,12 +46,23 @@ public interface UserService extends IService<User> {
     LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
     /**
-     * 得到脱敏后的用户信息
+     * 得到脱敏后的登录用户信息
+     *
      * @param user
      * @return
      */
 
     LoginUserVO getLoginUserVO(User user);
+
+    /**
+     * 获取脱敏后的用户信息
+     *
+     * @param user
+     * @return
+     */
+    UserVO getUserVO(User user);
+
+    List<UserVO> getUserVOList(List<User> userList);
 
     /**
      * 获取当前登录用户(系统内部使用)
@@ -64,5 +79,12 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean userLogout(HttpServletRequest request);
+
+    /**
+     * 获取查询
+     * @param userQueryRequest
+     * @return
+     */
+    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
 }

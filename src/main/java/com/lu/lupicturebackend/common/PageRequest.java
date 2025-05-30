@@ -12,7 +12,7 @@ public class PageRequest {
     /**
      * 当前页码
      */
-    private int pageNum = 1;
+    private int current= 1;
 
     /**
      * 每页显示条数
