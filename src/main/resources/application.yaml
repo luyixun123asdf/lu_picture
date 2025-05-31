@@ -3,8 +3,6 @@ server:
   servlet:
     context-path: /api
 
-
-
 spring:
   application:
     name: lu-picture-backend
@@ -15,6 +13,9 @@ spring:
     password: ${spring.datasource.password}
   profiles:
     active: local
+  servlet:
+    multipart:
+      max-file-size: 10MB
 
 mybatis-plus:
   configuration:
@@ -27,13 +28,12 @@ mybatis-plus:
       logic-delete-field: isDelete #逻辑删除字段名
       logic-delete-value: 1 # 逻辑已删除值
       logic-not-delete-value: 0
-knife4j:
 
+knife4j:
   enable: true
   openapi:
     title: 接口文档
     email: xiaoymin@foxmail.com
-
     version: 1.0
     group:
       default:

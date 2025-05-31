@@ -44,13 +44,13 @@ public class FileManager {
         File tempFile = null;
         String uuid = UUID.randomUUID().toString();
         String originalFilename = multipartFile.getOriginalFilename();
-        String uploadFileName = String.format("%_%s_%s", DateUtil.formatDate(new Date()), uuid, FileUtil.getSuffix(originalFilename));
-        String uploadPath = String.format("%s/%s", uploadPathPrefix, uploadFileName);
+        String uploadFileName = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, FileUtil.getSuffix(originalFilename));
+        String uploadPath = String.format("/%s/%s", uploadPathPrefix, uploadFileName);
         try {
             tempFile = File.createTempFile(uploadPath, null);
             multipartFile.transferTo(tempFile); // 将文件写入临时文件
             // 上传图片
-            PutObjectResult pictureObject = cosManager.putPictureObject(uploadFileName, tempFile);
+            PutObjectResult pictureObject = cosManager.putPictureObject(uploadPath, tempFile);
             // 获取图片信息
             ImageInfo imageInfo = pictureObject.getCiUploadResult().getOriginalInfo().getImageInfo();
             // 封装返回结果
@@ -58,13 +58,13 @@ public class FileManager {
             int width = imageInfo.getWidth();
             int height = imageInfo.getHeight();
             double picSale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();
-            pictureResult.setPicName(uploadFileName);
+            pictureResult.setPicName(FileUtil.mainName(originalFilename));
             pictureResult.setPicWidth(width);
             pictureResult.setPicHeight(height);
             pictureResult.setPicScale(picSale);
             pictureResult.setPicFormat(imageInfo.getFormat());
             pictureResult.setPicSize(FileUtil.size(tempFile));
-            pictureResult.setUrl(cosClientConfig.getHost() + "/" + uploadPath);
+            pictureResult.setUrl(cosClientConfig.getHost() + uploadPath);
             return pictureResult;
         } catch (Exception e) {
             log.error("图片上传到对象存储失败", e);
@@ -72,8 +72,6 @@ public class FileManager {
         } finally {
             deleteTempFile(tempFile);
         }
-
-        //
 
     }
 
@@ -92,7 +90,7 @@ public class FileManager {
         // 校验文件后缀
         String fileName = file.getOriginalFilename();
         String suffix = fileName.substring(fileName.lastIndexOf("."));
-        final List<String> allowSuffixList = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp",  ".svg");
+        final List<String> allowSuffixList = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg");
         ThrowUtils.throwIf(!allowSuffixList.contains(suffix), ErrorCode.PARAMS_ERROR, "文件类型错误");
 
     }

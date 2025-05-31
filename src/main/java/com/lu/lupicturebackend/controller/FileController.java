@@ -8,6 +8,11 @@ import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.manager.CosManager;
 
+import com.lu.lupicturebackend.model.dto.picture.PictureUploadRequest;
+import com.lu.lupicturebackend.model.entity.User;
+import com.lu.lupicturebackend.model.vo.PictureVO;
+import com.lu.lupicturebackend.service.PictureService;
+import com.lu.lupicturebackend.service.UserService;
 import com.qcloud.cos.model.COSObject;
 import com.qcloud.cos.model.COSObjectInputStream;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +33,12 @@ public class FileController {
 
     @Resource
     private CosManager cosManager;
+
+    @Resource
+    private UserService userService;
+
+    @Resource
+    private PictureService pictureService;
 
     /**
      * 文件上传
@@ -82,5 +94,18 @@ public class FileController {
         }finally {
             inputStream.close();
         }
+    }
+    /**
+     * 上传图片（可重新上传）
+     */
+    @PostMapping("/upload")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<PictureVO> uploadPicture(
+            @RequestPart("file") MultipartFile multipartFile,
+            PictureUploadRequest pictureUploadRequest,
+            HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
+        return ResultUtils.success(pictureVO);
     }
 }
