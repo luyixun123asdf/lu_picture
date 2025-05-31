@@ -41,16 +41,17 @@ public class FileManager {
         // 校验文件
         validPicture(multipartFile);
         //　上传图片
-        File tempFile = null;
+//        File tempFile = null;
         String uuid = UUID.randomUUID().toString();
         String originalFilename = multipartFile.getOriginalFilename();
         String uploadFileName = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, FileUtil.getSuffix(originalFilename));
         String uploadPath = String.format("/%s/%s", uploadPathPrefix, uploadFileName);
         try {
-            tempFile = File.createTempFile(uploadPath, null);
-            multipartFile.transferTo(tempFile); // 将文件写入临时文件
+//            tempFile = File.createTempFile(uploadPath, null);
+//            multipartFile.transferTo(tempFile); // 将文件写入临时文件
             // 上传图片
-            PutObjectResult pictureObject = cosManager.putPictureObject(uploadPath, tempFile);
+//            PutObjectResult pictureObject = cosManager.putPictureObject(uploadPath, tempFile);
+            PutObjectResult pictureObject = cosManager.uploadToCOS(multipartFile, cosClientConfig.getBucket(), uploadPath); // 直接上传到对象存储，不要保存为临时文件
             // 获取图片信息
             ImageInfo imageInfo = pictureObject.getCiUploadResult().getOriginalInfo().getImageInfo();
             // 封装返回结果
@@ -63,14 +64,14 @@ public class FileManager {
             pictureResult.setPicHeight(height);
             pictureResult.setPicScale(picSale);
             pictureResult.setPicFormat(imageInfo.getFormat());
-            pictureResult.setPicSize(FileUtil.size(tempFile));
+            pictureResult.setPicSize(multipartFile.getSize());
             pictureResult.setUrl(cosClientConfig.getHost() + uploadPath);
             return pictureResult;
         } catch (Exception e) {
             log.error("图片上传到对象存储失败", e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, e.getMessage());
         } finally {
-            deleteTempFile(tempFile);
+//            deleteTempFile(tempFile);
         }
 
     }
