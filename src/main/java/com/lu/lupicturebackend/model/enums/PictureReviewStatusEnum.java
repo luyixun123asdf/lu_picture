@@ -1,8 +1,11 @@
 package com.lu.lupicturebackend.model.enums;
 
+import lombok.Getter;
+
 /**
  *  图片审核状态枚举
  */
+@Getter
 public enum PictureReviewStatusEnum {
 
     REVIEWING("审核中", 0),
