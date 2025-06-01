@@ -1,4 +1,4 @@
-package com.lu.lupicturebackend.model.entity;
+package generator.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
-
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 /**
@@ -97,7 +95,6 @@ public class Picture implements Serializable {
      * 是否删除
      */
     private Integer isDelete;
-
 
     /**
      * 审核状态：0-待审核; 1-通过; 2-拒绝

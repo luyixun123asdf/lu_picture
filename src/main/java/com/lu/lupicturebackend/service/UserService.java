@@ -62,7 +62,7 @@ public interface UserService extends IService<User> {
      */
     UserVO getUserVO(User user);
 
-    List<UserVO> getUserVOList(List<User> userList);
+    List<UserVO> getUserVOList(List<User> userList); // 分页
 
     /**
      * 获取当前登录用户(系统内部使用)
@@ -86,5 +86,14 @@ public interface UserService extends IService<User> {
      * @return
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+
+    /**
+     * 是否为管理员
+     *
+     * @param user
+     * @return
+     */
+    boolean isAdmin(User user);
+
 
 }

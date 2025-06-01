@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 图片请求类
+ * 图片上传请求类
  */
 @Data
 public class PictureUploadRequest implements Serializable {
