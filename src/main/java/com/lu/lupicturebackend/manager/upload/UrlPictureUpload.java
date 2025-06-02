@@ -21,6 +21,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -82,16 +83,17 @@ public class UrlPictureUpload extends PictureUploadTemplate {
             }
             // 存在 文件后缀校验
             String content_type = httpResponse.header("Content-Type");
-//            Map<String, Boolean> stringStringMap = new HashMap<>();
-//            stringStringMap.put("image/png", true);
-//            stringStringMap.put("image/jpg", true);
-//            stringStringMap.put("image/jpeg", true);
-//            stringStringMap.put("image/gif", true);
-//            stringStringMap.put("image/webp", true);
-//            stringStringMap.put("image/svg", true);
+            final Map<String, Boolean> allowSuffixList = new HashMap<>();
+            allowSuffixList.put("image/png", true);
+            allowSuffixList.put("image/jpg", true);
+            allowSuffixList.put("image/jpeg", true);
+            allowSuffixList.put("image/gif", true);
+            allowSuffixList.put("image/webp", true);
+            allowSuffixList.put("image/svg", true);
 
-            final List<String> allowSuffixList = Arrays.asList("image/png", "image/jpg", "image/jpeg", "image/gif", "image/webp", "image/svg");
-            ThrowUtils.throwIf(!allowSuffixList.contains(content_type), ErrorCode.PARAMS_ERROR, "文件类型错误");
+
+//            final List<String> allowSuffixList = Arrays.asList("image/png", "image/jpg", "image/jpeg", "image/gif", "image/webp", "image/svg");
+            ThrowUtils.throwIf(!allowSuffixList.get(content_type), ErrorCode.PARAMS_ERROR, "文件类型错误");
             // 返回后缀
             return content_type.split("/")[1];
 

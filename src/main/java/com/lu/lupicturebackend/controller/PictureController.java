@@ -58,6 +58,18 @@ public class PictureController {
     }
 
     /**
+     * 批量抓取图片并创建图片
+     */
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchRequest  pictureUploadByBatchRequest, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+
+        Integer uploadCount = pictureService.batchUploadPicture(pictureUploadByBatchRequest, loginUser);
+        return ResultUtils.success(uploadCount);
+    }
+
+    /**
      * 图片删除功能
      *
      * @param deleteRequest
@@ -124,7 +136,7 @@ public class PictureController {
         Picture picture = pictureService.getById(id);
         Integer reviewStatus = picture.getReviewStatus();
         PictureReviewStatusEnum enumByValue = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
-        if (!PictureReviewStatusEnum.REVIEW_PASS.equals(enumByValue)){
+        if (!PictureReviewStatusEnum.REVIEW_PASS.equals(enumByValue)) {
             ThrowUtils.throwIf(true, ErrorCode.NOT_FOUND_ERROR);
         }
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);

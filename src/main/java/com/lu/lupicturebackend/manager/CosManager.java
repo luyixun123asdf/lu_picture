@@ -62,6 +62,7 @@ public class CosManager {
     public PutObjectResult uploadToCOS(MultipartFile multipartFile, String bucketName, String key) throws Exception {
 //        // 创建 COS 客户端
 //        COSClient cosClient = createCOSClient();
+        ThrowUtils.throwIf(multipartFile == null, ErrorCode.NOT_FOUND_ERROR, "上传文件为空");
 
         try (InputStream inputStream = multipartFile.getInputStream()) {
             // 元信息配置
@@ -74,10 +75,7 @@ public class CosManager {
             PicOperations picOperations = new PicOperations();
             picOperations.setIsPicInfo(1);
             putObjectRequest.setPicOperations(picOperations);
-
             // 上传文件
-//            cosClient.putObject(putObjectRequest);
-
             return cosClient.putObject(putObjectRequest);
 
 //            // 生成访问链接
