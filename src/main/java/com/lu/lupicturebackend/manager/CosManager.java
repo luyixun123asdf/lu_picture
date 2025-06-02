@@ -1,6 +1,8 @@
 package com.lu.lupicturebackend.manager;
 
 import com.lu.lupicturebackend.config.CosClientConfig;
+import com.lu.lupicturebackend.exception.ErrorCode;
+import com.lu.lupicturebackend.exception.ThrowUtils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.*;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
@@ -45,6 +47,9 @@ public class CosManager {
      * @return
      */
     public PutObjectResult putPictureObject(String key, File file) {
+        if ( file == null){
+            ThrowUtils.throwIf(true, ErrorCode.NOT_FOUND_ERROR, "上传文件为空");
+        }
         PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key, file);
         PicOperations picOperations = new PicOperations();
         picOperations.setIsPicInfo(1);
