@@ -113,6 +113,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setPicScale(uploadPictureResult.getPicScale());
         picture.setPicFormat(uploadPictureResult.getPicFormat());
         picture.setUserId(loginUser.getId());
+        String picName = uploadPictureResult.getPicName();
+        if (pictureUploadRequest != null && StrUtil.isNotBlank(pictureUploadRequest.getPicName())) {
+            picName = pictureUploadRequest.getPicName();
+        }
+        picture.setName(picName);
         // 操作数据库
         // 如果pictureID  不为空，则修改
         if (pictureUploadRequest.getId() != null) {
@@ -358,8 +363,16 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 4.上传图片
             PictureUploadRequest pictureUploadRequest = new PictureUploadRequest();
             pictureUploadRequest.setFileUrl(fileUrl);
+            String namePrefix = pictureUploadByBatchRequest.getNamePrefix();
+            if (StrUtil.isBlank(namePrefix)) {
+                namePrefix = searchText;
+            }
 
             try {
+                if (StrUtil.isNotBlank(namePrefix)) {
+                    // 设置图片名称，序号连续递增
+                    pictureUploadRequest.setPicName(namePrefix + (uploadCount + 1));
+                }
                 PictureVO pictureVO = this.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
                 log.info("图片上传成功,id={}", pictureVO.getId());
                 uploadCount++;

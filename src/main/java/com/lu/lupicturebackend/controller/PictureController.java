@@ -157,7 +157,7 @@ public class PictureController {
         return ResultUtils.success(picture);
     }
 
-    /**
+    /**z45
      * 分页获取图片列表（仅管理员可用）
      */
     @PostMapping("/list/page")
