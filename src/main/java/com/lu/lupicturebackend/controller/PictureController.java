@@ -2,6 +2,8 @@ package com.lu.lupicturebackend.controller;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.lu.lupicturebackend.annotation.AuthCheck;
 import com.lu.lupicturebackend.common.BaseResponse;
 import com.lu.lupicturebackend.common.DeleteRequest;
@@ -9,6 +11,7 @@ import com.lu.lupicturebackend.common.ResultUtils;
 import com.lu.lupicturebackend.constant.UserConstant;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
+import com.lu.lupicturebackend.manager.cache.CacheManager;
 import com.lu.lupicturebackend.model.dto.picture.*;
 import com.lu.lupicturebackend.model.entity.Picture;
 import com.lu.lupicturebackend.model.entity.User;
@@ -19,6 +22,8 @@ import com.lu.lupicturebackend.service.PictureService;
 import com.lu.lupicturebackend.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,13 +31,31 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/picture")
 @AllArgsConstructor
 public class PictureController {
+
     private final PictureService pictureService;
+
     private final UserService userService;
+
+    private final StringRedisTemplate stringRedisTemplate;
+
+    /**
+     * 本地缓存caffeine
+     */
+    private final Cache<String, String> LOCAL_CACHE =
+            Caffeine.newBuilder().initialCapacity(1024)
+                    .maximumSize(10000L) // 最大1w条
+                    // 缓存 5 分钟移除
+                    .expireAfterWrite(5L, TimeUnit.MINUTES)
+                    .build();
+
+    private final CacheManager cacheManager;
+
 
     /**
      * 根据文件上传图片（可重新上传）
@@ -76,7 +99,7 @@ public class PictureController {
      * @param request
      * @return
      */
-
+    // TODO 目前只删除了数据库的记录数据，没有删除对象存储中的图片
     @PostMapping("/delete")
     public BaseResponse<Boolean> deletePicture(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         // 校验参数
@@ -183,9 +206,33 @@ public class PictureController {
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
         // 获取封装类
-        return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
+        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
+
+        return ResultUtils.success(pictureVOPage);
 
     }
+    /**
+     * 分页获取图片列表（封装类,使用缓存）
+     */
+    @PostMapping("/list/page/vo/cache")
+    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
+        long current = pictureQueryRequest.getCurrent();
+        long size = pictureQueryRequest.getPageSize();
+        // 1、限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 2、普通用户只能查看审核通过的图片
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
+        // 3、查询缓存，没有再查询数据库
+        String queryCondition  = JSONUtil.toJsonStr(pictureQueryRequest); // 构建key
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String cacheKey = String.format("luPicture:PictureVOByPage:%s", hashKey);
+        return cacheManager.queryWithCache(LOCAL_CACHE, cacheKey, stringRedisTemplate, () -> {
+            Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
+            Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
+            return pictureVOPage;
+        });
+    }
+
 
     /**
      * 编辑图片（给用户使用）

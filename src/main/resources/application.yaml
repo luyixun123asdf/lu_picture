@@ -11,6 +11,12 @@ spring:
     url: ${spring.datasource.url}
     username: ${spring.datasource.username}
     password: ${spring.datasource.password}
+  # Rdis配置
+  redis:
+    database: 1
+    host: 192.168.10.25
+    port: 6379
+    timeout: 5000
   profiles:
     active: local
   servlet:

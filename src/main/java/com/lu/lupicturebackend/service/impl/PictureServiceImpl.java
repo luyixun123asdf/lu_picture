@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
-import com.lu.lupicturebackend.manager.FileManager;
 import com.lu.lupicturebackend.manager.upload.FilePictureUpload;
 import com.lu.lupicturebackend.manager.upload.PictureUploadTemplate;
 import com.lu.lupicturebackend.manager.upload.UrlPictureUpload;
@@ -27,7 +26,6 @@ import com.lu.lupicturebackend.model.vo.UserVO;
 import com.lu.lupicturebackend.service.PictureService;
 import com.lu.lupicturebackend.mapper.PictureMapper;
 import com.lu.lupicturebackend.service.UserService;
-import jdk.nashorn.internal.ir.IfNode;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -35,7 +33,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -106,6 +103,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 构造对象存入数据库
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
+        // 缩略图url
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
         picture.setName(uploadPictureResult.getPicName());
         picture.setPicSize(uploadPictureResult.getPicSize());
         picture.setPicWidth(uploadPictureResult.getPicWidth());
@@ -227,7 +226,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      */
     @Override
     public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request) {
-        Page<PictureVO> pictureVOPage = new Page<>(picturePage.getCurrent(), picturePage.getSize());
+        Page<PictureVO> pictureVOPage = new Page<>(picturePage.getCurrent(), picturePage.getSize(), picturePage.getTotal());
         // 获取图片列表
         List<Picture> pictureList = picturePage.getRecords();
         if (CollUtil.isEmpty(pictureList)) {

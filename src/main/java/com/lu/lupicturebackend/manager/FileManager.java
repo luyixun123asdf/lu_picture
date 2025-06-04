@@ -123,8 +123,6 @@ public class FileManager {
 
     }
 
-    // todo 新增的方法
-
     /**
      * 通过url下载图片的方法
      *
