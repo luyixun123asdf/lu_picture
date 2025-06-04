@@ -117,6 +117,7 @@ public class PictureController {
         // 操作数据库
         boolean b = pictureService.removeById(id);
         ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR);
+        pictureService.deletePicture(oldPicture);
         return ResultUtils.success(true);
     }
 

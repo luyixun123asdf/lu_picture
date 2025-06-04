@@ -50,7 +50,7 @@ public class CosManager {
      * @return
      */
     public PutObjectResult putPictureObject(String key, File file) {
-        if ( file == null){
+        if (file == null) {
             ThrowUtils.throwIf(true, ErrorCode.NOT_FOUND_ERROR, "上传文件为空");
         }
         PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key, file);
@@ -59,18 +59,18 @@ public class CosManager {
         PicOperations picOperations = new PicOperations();
         picOperations.setIsPicInfo(1);
 
-        if (file.length() > 2 * 1024){
+        if (file.length() > 2 * 1024) {
             // 2、缩略图规则
             PicOperations.Rule thumbnailRule = new PicOperations.Rule();
             thumbnailRule.setBucket(cosClientConfig.getBucket());
-            thumbnailRule.setFileId(FileUtil.mainName(key)+"_thumbnail"+FileUtil.getSuffix(key));
+            thumbnailRule.setFileId(FileUtil.mainName(key) + "_thumbnail" + FileUtil.getSuffix(key));
             thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>", 128, 128));
             rules.add(thumbnailRule);
         }
         // 压缩图片为webp格式
         PicOperations.Rule rule = new PicOperations.Rule();
         // 获取名字
-        String webKey = FileUtil.mainName(key)+".webp";
+        String webKey = FileUtil.mainName(key) + ".webp";
         // 1\设置压缩规则
         rule.setRule("imageMogr2/format/webp");
         rule.setBucket(cosClientConfig.getBucket());
@@ -106,7 +106,7 @@ public class CosManager {
             // 1、压缩图片为webp格式
             PicOperations.Rule rule = new PicOperations.Rule();
             // 获取名字
-            String webKey = FileUtil.mainName(key)+".webp";
+            String webKey = FileUtil.mainName(key) + ".webp";
 
             // 设置规则
             rule.setRule("imageMogr2/format/webp");
@@ -116,7 +116,7 @@ public class CosManager {
             // 2、缩略图规则
             PicOperations.Rule thumbnailRule = new PicOperations.Rule();
             thumbnailRule.setBucket(cosClientConfig.getBucket());
-            thumbnailRule.setFileId(FileUtil.mainName(key)+"_thumbnail"+FileUtil.getSuffix(key));
+            thumbnailRule.setFileId(FileUtil.mainName(key) + "_thumbnail" + FileUtil.getSuffix(key));
             thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>", 128, 128));
             rules.add(thumbnailRule);
 
@@ -132,6 +132,15 @@ public class CosManager {
         } finally {
             cosClient.shutdown();
         }
+    }
+
+    /**
+     *
+     * 删除对象
+     * @param key 唯一键
+     */
+    public void deleteObject(String key) {
+        cosClient.deleteObject(cosClientConfig.getBucket(), key);
     }
 
 

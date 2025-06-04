@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
+import com.lu.lupicturebackend.manager.CosManager;
 import com.lu.lupicturebackend.manager.upload.FilePictureUpload;
 import com.lu.lupicturebackend.manager.upload.PictureUploadTemplate;
 import com.lu.lupicturebackend.manager.upload.UrlPictureUpload;
@@ -32,6 +33,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -63,6 +66,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     private UrlPictureUpload urlPictureUpload;
+
+    @Resource
+    private CosManager cosManager;
 
     /**
      * 上传图片
@@ -386,6 +392,30 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
 
         return uploadCount;
+    }
+
+    /**
+     * 清理对象图片
+     * @param oldPicture
+     */
+    @Async
+    @Override
+    public void deletePicture(Picture oldPicture) {
+        String oldPictureUrl = oldPicture.getUrl();
+        // 判断该图片是否被多个记录使用
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        Long count = lambdaQuery()
+                .eq(Picture::getUrl, oldPictureUrl)
+                .count();
+        ThrowUtils.throwIf(count > 1, ErrorCode.SYSTEM_ERROR, "图片被多个记录使用，请先删除该图片的记录");
+        // 删除图片
+        cosManager.deleteObject(oldPictureUrl);
+
+        if (oldPicture.getThumbnailUrl() != null) {
+            // 删除缩略图
+            cosManager.deleteObject(oldPicture.getThumbnailUrl());
+        }
+
     }
 
 
