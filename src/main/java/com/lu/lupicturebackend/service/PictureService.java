@@ -2,10 +2,7 @@ package com.lu.lupicturebackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.lu.lupicturebackend.model.dto.picture.PictureQueryRequest;
-import com.lu.lupicturebackend.model.dto.picture.PictureReviewRequest;
-import com.lu.lupicturebackend.model.dto.picture.PictureUploadByBatchRequest;
-import com.lu.lupicturebackend.model.dto.picture.PictureUploadRequest;
+import com.lu.lupicturebackend.model.dto.picture.*;
 import com.lu.lupicturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lu.lupicturebackend.model.entity.User;
@@ -97,4 +94,25 @@ public interface PictureService extends IService<Picture> {
      * @return
      */
     void deletePicture(Picture  oldPicture);
+
+    /**
+     * 校验空间图片的权限
+     * @param picture
+     * @param loginUser
+     */
+    void checkPictureAuth(Picture picture, User loginUser);
+
+    /**
+     * 删除图片
+     * @param id
+     * @param loginUser
+     */
+    void deletePicture(Long id, User loginUser);
+
+    /**
+     * 编辑图片
+     * @param pictureEditRequest
+     * @param request
+     */
+    void editPicture(PictureEditRequest pictureEditRequest, HttpServletRequest request);
 }

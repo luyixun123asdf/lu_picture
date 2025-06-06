@@ -6,12 +6,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.lu.lupicturebackend.common.BaseResponse;
 import com.lu.lupicturebackend.common.ResultUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Component
 public class CacheManager {
 
@@ -36,12 +38,13 @@ public class CacheManager {
             // 命中直接返回结果，更新本地缓存
             LOCAL_CACHE.put(cacheKey, s);
             T result = JSONUtil.toBean(s, (Class<T>) Page.class); // 注意：这里假设返回的是Page.class类型
+            log.info("命中缓存 ：",result.toString());
             return ResultUtils.success(result);
         }
 
         // 执行数据库操作
         T result = databaseOperation.execute();
-
+        log.info("未命中缓存 ：",result.toString());
         // 存入Redis
         int expireTime = 300 + RandomUtil.randomInt(0, 300);
         stringStringValueOperations.set(cacheKey, JSONUtil.toJsonStr(result), expireTime, TimeUnit.SECONDS);
