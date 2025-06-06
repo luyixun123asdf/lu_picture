@@ -12,6 +12,7 @@ import com.lu.lupicturebackend.exception.ThrowUtils;
 import com.lu.lupicturebackend.model.dto.space.*;
 import com.lu.lupicturebackend.model.entity.Space;
 import com.lu.lupicturebackend.model.entity.User;
+import com.lu.lupicturebackend.model.enums.SpaceLevelEnum;
 import com.lu.lupicturebackend.model.vo.SpaceVO;
 import com.lu.lupicturebackend.service.SpaceService;
 import com.lu.lupicturebackend.service.UserService;
@@ -23,7 +24,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -189,6 +193,21 @@ public class SpaceController {
         boolean result = spaceService.updateById(space);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 获取空间级别列表，便于前端展示
+     * @return
+     */
+    @GetMapping("/list/level")
+    public  BaseResponse<List<SpaceLevel>> listSpaceLevel() {
+        List<SpaceLevel> spaceLevelList = Arrays.stream(SpaceLevelEnum.values())
+                .map(spaceLevelEnum -> new SpaceLevel(spaceLevelEnum.getValue(),
+                        spaceLevelEnum.getText(),
+                        spaceLevelEnum.getMaxCount(),
+                        spaceLevelEnum.getMaxSize()))
+                .collect(Collectors.toList());
+        return ResultUtils.success(spaceLevelList);
     }
 
 
