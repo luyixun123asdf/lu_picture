@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class CosManager {
@@ -135,12 +136,21 @@ public class CosManager {
     }
 
     /**
-     *
      * 删除对象
+     *
      * @param key 唯一键
      */
     public void deleteObject(String key) {
         cosClient.deleteObject(cosClientConfig.getBucket(), key);
+    }
+
+    /**
+     * 批量删除对象
+     * @param keys
+     */
+    public void deleteObjects(List<String> keys) {
+        DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(cosClientConfig.getBucket());
+        deleteObjectsRequest.setKeys(keys.stream().map(key -> new DeleteObjectsRequest.KeyVersion(key)).collect(Collectors.toList()));
     }
 
 

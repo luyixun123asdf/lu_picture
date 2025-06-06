@@ -9,17 +9,22 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
+import com.lu.lupicturebackend.manager.CosManager;
 import com.lu.lupicturebackend.model.dto.space.SpaceAddRequest;
 import com.lu.lupicturebackend.model.dto.space.SpaceQueryRequest;
 
+import com.lu.lupicturebackend.model.entity.Picture;
 import com.lu.lupicturebackend.model.entity.Space;
 import com.lu.lupicturebackend.model.entity.User;
 import com.lu.lupicturebackend.model.enums.SpaceLevelEnum;
 import com.lu.lupicturebackend.model.vo.SpaceVO;
 import com.lu.lupicturebackend.model.vo.UserVO;
+import com.lu.lupicturebackend.service.PictureService;
 import com.lu.lupicturebackend.service.SpaceService;
 import com.lu.lupicturebackend.mapper.SpaceMapper;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -47,6 +52,12 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     // 编程式事务
     @Resource
     private TransactionTemplate transactionTemplate;
+
+    @Resource
+    private PictureService pictureService;
+
+    @Resource
+    private CosManager cosManager;
 
     /**
      * 创建空间
@@ -234,6 +245,29 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 space.setMaxSize(enumByValue.getMaxSize());
             }
         }
+    }
+
+    /**
+     * 批量删除对象存储中的图片
+     *
+     * @param spaceId
+     * @param loginUser
+     * @return
+     */
+    @Async
+    @Override
+    public void deleteSpaceAndPicture(long spaceId, User loginUser) {
+        List<Picture> list = pictureService.lambdaQuery()
+                .eq(Picture::getSpaceId, spaceId)
+                .list();
+        if (list.size() <= 0) {
+            return;
+        }
+        // 获取图片的url和thumbnailUrl
+        List<String> collect = list.stream()
+                .map(picture -> picture.getUrl())
+                .collect(Collectors.toList());
+        cosManager.deleteObjects(collect);
     }
 }
 

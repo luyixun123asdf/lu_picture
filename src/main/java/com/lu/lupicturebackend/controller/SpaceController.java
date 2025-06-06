@@ -77,6 +77,7 @@ public class SpaceController {
         // 操作数据库
         boolean b = spaceService.removeById(id);
         ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR);
+        spaceService.deleteSpaceAndPicture(id, loginUser);
         return ResultUtils.success(true);
     }
 
