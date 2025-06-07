@@ -14,6 +14,7 @@ import com.lu.lupicturebackend.model.entity.Space;
 import com.lu.lupicturebackend.model.entity.User;
 import com.lu.lupicturebackend.model.enums.SpaceLevelEnum;
 import com.lu.lupicturebackend.model.vo.SpaceVO;
+import com.lu.lupicturebackend.service.PictureService;
 import com.lu.lupicturebackend.service.SpaceService;
 import com.lu.lupicturebackend.service.UserService;
 import lombok.AllArgsConstructor;
@@ -38,6 +39,8 @@ public class SpaceController {
     private final SpaceService spaceService;
 
     private final UserService userService;
+
+    private final PictureService pictureService;
 
     /**
      * 添加空间
@@ -76,8 +79,8 @@ public class SpaceController {
         }
         // 操作数据库
         boolean b = spaceService.removeById(id);
-        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR);
-        spaceService.deleteSpaceAndPicture(id, loginUser);
+        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR,  "删除失败");
+        pictureService.deleteSpaceAndPicture(id, loginUser);
         return ResultUtils.success(true);
     }
 
@@ -111,8 +114,8 @@ public class SpaceController {
     /**
      * 根据 id 获取空间（封装类）
      */
+
     @GetMapping("/get/vo")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<SpaceVO> getSpaceVOById(long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Space space = spaceService.getById(id);

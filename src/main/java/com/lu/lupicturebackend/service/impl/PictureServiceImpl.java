@@ -86,8 +86,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      */
     @Override
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
+        if (pictureUploadRequest == null) {
+            ThrowUtils.throwIf(true, ErrorCode.PARAMS_ERROR, "参数不能为空");
+        }
         // 判断用户是否登录
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+
         // 校验空间
         Long spaceId = pictureUploadRequest.getSpaceId();
         if (spaceId != null) {
@@ -104,9 +108,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         }
         // 判断是新增还是修改
-        if (pictureUploadRequest == null) {
-            ThrowUtils.throwIf(true, ErrorCode.PARAMS_ERROR, "参数不能为空");
-        }
+
         if (pictureUploadRequest.getId() != null) {  // 修改
             Long id = pictureUploadRequest.getId();
             // 查询数据库
@@ -169,12 +171,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         transactionTemplate.execute(status -> {
             boolean save = this.saveOrUpdate(picture);
             ThrowUtils.throwIf(!save, ErrorCode.OPERATION_ERROR, "上传失败");
-            boolean update = spaceService.lambdaUpdate()
-                    .eq(Space::getId, finalSpaceId)
-                    .setSql("totalSize = totalSize + " + picture.getPicSize())
-                    .setSql("totalCount = totalCount + 1")
-                    .update();
-            ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新空间信息失败");
+            if (finalSpaceId != null) {
+                boolean update = spaceService.lambdaUpdate()
+                        .eq(Space::getId, finalSpaceId)
+                        .setSql("totalSize = totalSize + " + picture.getPicSize())
+                        .setSql("totalCount = totalCount + 1")
+                        .update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新空间信息失败");
+            }
             return true;
         });
 
@@ -488,7 +492,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         } else {
             // 私有空间
-            if (userId.equals(picture.getUserId())) {
+            if (!userId.equals(picture.getUserId())) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
         }
@@ -554,6 +558,23 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 操作数据库
         boolean result = this.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
+
+
+    @Async
+    @Override
+    public void deleteSpaceAndPicture(long spaceId, User loginUser) {
+        List<Picture> list = this.lambdaQuery()
+                .eq(Picture::getSpaceId, spaceId)
+                .list();
+        if (list.size() <= 0) {
+            return;
+        }
+        // 获取图片的url和thumbnailUrl
+        List<String> collect = list.stream()
+                .map(picture -> picture.getUrl())
+                .collect(Collectors.toList());
+        cosManager.deleteObjects(collect);
     }
 
 }

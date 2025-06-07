@@ -70,10 +70,7 @@ public interface SpaceService extends IService<Space> {
     void fillSpaceBySpaceLevel(Space space);
 
 
-    /**
-     * 删除空间同时删除修相关的照片
-     */
-    void deleteSpaceAndPicture(long spaceId,  User loginUser);
+
 
 
 }

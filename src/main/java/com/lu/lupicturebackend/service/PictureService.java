@@ -7,6 +7,7 @@ import com.lu.lupicturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lu.lupicturebackend.model.entity.User;
 import com.lu.lupicturebackend.model.vo.PictureVO;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -115,4 +116,7 @@ public interface PictureService extends IService<Picture> {
      * @param request
      */
     void editPicture(PictureEditRequest pictureEditRequest, HttpServletRequest request);
+
+    @Async
+    void deleteSpaceAndPicture(long spaceId, User loginUser);
 }

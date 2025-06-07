@@ -61,14 +61,10 @@ public class PictureController {
     private final SpaceService spaceService;
 
 
-
-
-
     /**
      * 根据文件上传图片（可重新上传）
      */
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
@@ -92,7 +88,7 @@ public class PictureController {
      */
     @PostMapping("/upload/batch")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchRequest  pictureUploadByBatchRequest, HttpServletRequest request) {
+    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest, HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
 
         Integer uploadCount = pictureService.batchUploadPicture(pictureUploadByBatchRequest, loginUser);
@@ -152,21 +148,13 @@ public class PictureController {
      * 根据 id 获取图片（封装类）
      */
     @GetMapping("/get/vo")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> getPictureVOById(long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Picture picture = pictureService.getById(id);
-        Integer reviewStatus = picture.getReviewStatus();
-        PictureReviewStatusEnum enumByValue = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
-        if (!PictureReviewStatusEnum.REVIEW_PASS.equals(enumByValue)) {
-            ThrowUtils.throwIf(true, ErrorCode.NOT_FOUND_ERROR);
-        }
-
         //　空间权限校验
-        if (picture.getSpaceId()!=null){
-            User loginUser = userService.getLoginUser(request);
-            pictureService.checkPictureAuth(picture, loginUser);
-        }
+        User loginUser = userService.getLoginUser(request);
+        pictureService.checkPictureAuth(picture, loginUser);
+
 
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
         return ResultUtils.success(pictureService.getPictureVO(picture, request));
@@ -186,7 +174,8 @@ public class PictureController {
         return ResultUtils.success(picture);
     }
 
-    /**z45
+    /**
+     * z45
      * 分页获取图片列表（仅管理员可用）
      */
     @PostMapping("/list/page")
@@ -198,63 +187,78 @@ public class PictureController {
         return ResultUtils.success(page);
     }
 
+//    /**
+//     * 分页获取图片列表（封装类）使用缓存
+//     */
+//    @PostMapping("/list/page/vo")
+//    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
+//        long current = pictureQueryRequest.getCurrent();
+//        long size = pictureQueryRequest.getPageSize();
+//        // 1、限制爬虫
+//        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+//        // 2、普通用户只能查看审核通过的图片
+//        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
+//        // 3、查询缓存，没有再查询数据库
+//        String queryCondition  = JSONUtil.toJsonStr(pictureQueryRequest); // 构建key
+//        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+//        String cacheKey = String.format("luPicture:PictureVOByPage:%s", hashKey);
+//        // 空间权限校验
+//        Long spaceId = pictureQueryRequest.getSpaceId();
+//        if (spaceId == null) {
+//            // 公共图片
+//            pictureQueryRequest.setNullSpaceId(true);
+//        }else {
+//            // 私有空间
+//            User loginUser = userService.getLoginUser(request);
+//            Space space = spaceService.getById(spaceId);
+//            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR,  "空间不存在");
+//            if (!space.getUserId().equals(loginUser.getId())){
+//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无空间权限");
+//            }
+//        }
+//
+//        return cacheManager.queryWithCache(LOCAL_CACHE, cacheKey, stringRedisTemplate, () -> {
+//            Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
+//            Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
+//            return pictureVOPage;
+//        });
+//
+//    }
+
     /**
-     * 分页获取图片列表（封装类）使用缓存
+     * 分页获取图片列表（封装类）
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
-        // 1、限制爬虫
+        // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        // 2、普通用户只能查看审核通过的图片
-        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
-        // 3、查询缓存，没有再查询数据库
-        String queryCondition  = JSONUtil.toJsonStr(pictureQueryRequest); // 构建key
-        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-        String cacheKey = String.format("luPicture:PictureVOByPage:%s", hashKey);
+
         // 空间权限校验
         Long spaceId = pictureQueryRequest.getSpaceId();
         if (spaceId == null) {
             // 公共图片
+            // 普通用户只能查看审核通过的图片
+            pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
             pictureQueryRequest.setNullSpaceId(true);
-        }else {
+        } else {
             // 私有空间
             User loginUser = userService.getLoginUser(request);
             Space space = spaceService.getById(spaceId);
-            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR,  "空间不存在");
-            if (!space.getUserId().equals(loginUser.getId())){
+            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+            if (!space.getUserId().equals(loginUser.getId())) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无空间权限");
             }
         }
+        // 查询数据库
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
+        // 获取封装类
+        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
 
-        return cacheManager.queryWithCache(LOCAL_CACHE, cacheKey, stringRedisTemplate, () -> {
-            Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
-            Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
-            return pictureVOPage;
-        });
+        return ResultUtils.success(pictureVOPage);
 
     }
-
-    /**
-     * 分页获取图片列表（封装类）
-     */
-//    @PostMapping("/list/page/vo")
-//    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
-//        long current = pictureQueryRequest.getCurrent();
-//        long size = pictureQueryRequest.getPageSize();
-//        // 限制爬虫
-//        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-//        // 普通用户只能查看审核通过的图片
-//        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
-//        // 查询数据库
-//        Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
-//        // 获取封装类
-//        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
-//
-//        return ResultUtils.success(pictureVOPage);
-//
-//    }
 
 
     /**
