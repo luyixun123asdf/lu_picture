@@ -1,6 +1,5 @@
 package com.lu.lupicturebackend.service.impl;
 
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -222,6 +221,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Long spaceId = pictureQueryRequest.getSpaceId();
         boolean nullSpaceId = pictureQueryRequest.isNullSpaceId();
 
+        // 编辑时间
+        Date startEditTime = pictureQueryRequest.getStartEditTime();
+        Date endEditTime = pictureQueryRequest.getEndEditTime();
+
         // 从多字段中搜索
         if (StrUtil.isNotBlank(searchText)) {
             // 需要拼接查询条件
@@ -246,6 +249,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 空间查询
         queryWrapper.eq(ObjUtil.isNotEmpty(spaceId), "spaceId", spaceId);
         queryWrapper.isNull(nullSpaceId, "spaceId");
+
+        // 时间查询
+        queryWrapper.ge(ObjUtil.isNotEmpty(startEditTime), "editTime", startEditTime); //>=
+        queryWrapper.le(ObjUtil.isNotEmpty(endEditTime), "editTime", endEditTime); // <
 
         // JSON 数组查询
         if (CollUtil.isNotEmpty(tags)) {

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.lu.lupicturebackend.annotation.AuthCheck;
+import com.lu.lupicturebackend.api.imagesearch.ImageSearchApiFacade;
+import com.lu.lupicturebackend.api.imagesearch.model.ImageSearchResult;
 import com.lu.lupicturebackend.common.BaseResponse;
 import com.lu.lupicturebackend.common.DeleteRequest;
 import com.lu.lupicturebackend.common.ResultUtils;
@@ -26,7 +28,6 @@ import com.lu.lupicturebackend.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -297,6 +298,22 @@ public class PictureController {
         User loginUser = userService.getLoginUser(request);
         pictureService.doPictureReview(pictureQueryRequest, loginUser);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 以图搜图
+     */
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null || searchPictureByPictureRequest.getPictureId() <= 0, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null, ErrorCode.PARAMS_ERROR, "图片id不能为空");
+        Picture picture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        if (picture.getPicFormat().equals("webp")){
+            picture.setUrl(picture.getThumbnailUrl());
+        }
+        return ResultUtils.success(ImageSearchApiFacade.searchImage(picture.getUrl()));
     }
 
 
