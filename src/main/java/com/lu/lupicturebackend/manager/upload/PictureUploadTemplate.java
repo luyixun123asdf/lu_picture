@@ -27,7 +27,6 @@ public abstract class PictureUploadTemplate {
     private CosClientConfig cosClientConfig;
 
 
-
     /**
      * 上传图片
      *
@@ -40,7 +39,7 @@ public abstract class PictureUploadTemplate {
         //　上传图片
 
         String uuid = UUID.randomUUID().toString();
-        String originalFilename = getOriginalFilename(inputResource,preFxi); // 完整的文件名
+        String originalFilename = getOriginalFilename(inputResource, preFxi); // 完整的文件名
         String uploadFileName = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, FileUtil.getSuffix(originalFilename));
         String uploadPath = String.format("/%s/%s", uploadPathPrefix, uploadFileName);
         try {
@@ -53,16 +52,16 @@ public abstract class PictureUploadTemplate {
             ProcessResults processResults = pictureObject.getCiUploadResult().getProcessResults();
             List<CIObject> objectList = processResults.getObjectList();
 
-            if (!objectList.isEmpty()){
+            if (!objectList.isEmpty()) {
                 // 获取压缩后的图片信息
                 CIObject ciObject = objectList.get(0);
                 CIObject thumbnailObject = ciObject; // 默认压缩后的图片就是缩略图
-                if (objectList.size()>1){
+                if (objectList.size() > 1) {
                     // 获取缩略图信息
                     thumbnailObject = objectList.get(1);
                 }
                 //封装返回结果
-                return builderResult(originalFilename,ciObject,pictureResult,thumbnailObject);
+                return builderResult(originalFilename, ciObject, pictureResult, thumbnailObject, imageInfo);
             }
 
             return builderResult(originalFilename, uploadPath, imageInfo, pictureResult);
@@ -84,7 +83,7 @@ public abstract class PictureUploadTemplate {
      * @return
      */
 
-    private UploadPictureResult builderResult(String originalFilename, CIObject ciObject, UploadPictureResult pictureResult, CIObject thumbnailObject) {
+    private UploadPictureResult builderResult(String originalFilename, CIObject ciObject, UploadPictureResult pictureResult, CIObject thumbnailObject, ImageInfo imageInfo) {
         int width = ciObject.getWidth();
         int height = ciObject.getHeight();
         double picSale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();
@@ -93,10 +92,11 @@ public abstract class PictureUploadTemplate {
         pictureResult.setPicHeight(height);
         pictureResult.setPicScale(picSale);
         pictureResult.setPicFormat(ciObject.getFormat());
+        pictureResult.setPicColor(imageInfo.getAve()); // 图片主色调
         // 压缩后的原图地址
-        pictureResult.setUrl(cosClientConfig.getHost() + "/"+ciObject.getKey());
+        pictureResult.setUrl(cosClientConfig.getHost() + "/" + ciObject.getKey());
         // 缩略图地址
-        pictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/"+thumbnailObject.getKey());
+        pictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailObject.getKey());
         return pictureResult;
     }
 
@@ -121,6 +121,7 @@ public abstract class PictureUploadTemplate {
         pictureResult.setPicScale(picSale);
         pictureResult.setPicFormat(imageInfo.getFormat());
         pictureResult.setUrl(cosClientConfig.getHost() + uploadPath);
+        pictureResult.setPicColor(imageInfo.getAve());
         return pictureResult;
     }
 
@@ -141,7 +142,7 @@ public abstract class PictureUploadTemplate {
      * @param inputResource
      * @return
      */
-    protected abstract String getOriginalFilename(Object inputResource,String prefix);
+    protected abstract String getOriginalFilename(Object inputResource, String prefix);
 
     /**
      * 校验输入源

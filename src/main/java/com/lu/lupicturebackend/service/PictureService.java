@@ -8,9 +8,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.lu.lupicturebackend.model.entity.User;
 import com.lu.lupicturebackend.model.vo.PictureVO;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author 86186
@@ -84,20 +84,23 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 批量抓取图片
+     *
      * @param pictureUploadByBatchRequest
      * @param loginUser
      */
-    Integer batchUploadPicture(PictureUploadByBatchRequest  pictureUploadByBatchRequest, User loginUser);
+    Integer batchUploadPicture(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 
     /**
      * 清理图片
+     *
      * @param oldPicture
      * @return
      */
-    void deletePicture(Picture  oldPicture);
+    void deletePicture(Picture oldPicture);
 
     /**
      * 校验空间图片的权限
+     *
      * @param picture
      * @param loginUser
      */
@@ -105,6 +108,7 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 删除图片
+     *
      * @param id
      * @param loginUser
      */
@@ -112,11 +116,20 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 编辑图片
+     *
      * @param pictureEditRequest
      * @param request
      */
     void editPicture(PictureEditRequest pictureEditRequest, HttpServletRequest request);
 
+    /*
+     * 删除空间下的图片
+     */
     @Async
     void deleteSpaceAndPicture(long spaceId, User loginUser);
+
+    /**
+     * 根据颜色搜索
+     */
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
 }

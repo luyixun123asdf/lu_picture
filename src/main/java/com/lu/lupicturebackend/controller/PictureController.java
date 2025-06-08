@@ -310,10 +310,23 @@ public class PictureController {
         ThrowUtils.throwIf(pictureId == null, ErrorCode.PARAMS_ERROR, "图片id不能为空");
         Picture picture = pictureService.getById(pictureId);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
-        if (picture.getPicFormat().equals("webp")){
+        if (picture.getPicFormat().equals("webp")) {
             picture.setUrl(picture.getThumbnailUrl());
         }
         return ResultUtils.success(ImageSearchApiFacade.searchImage(picture.getUrl()));
+    }
+
+    /**
+     * 按照颜色搜图
+     */
+
+    @PostMapping("/search/color")
+    public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorRequest searchPictureByColorRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(searchPictureByColorRequest == null || searchPictureByColorRequest.getSpaceId() <= 0, ErrorCode.PARAMS_ERROR);
+        Long spaceId = searchPictureByColorRequest.getSpaceId();
+        String picColor = searchPictureByColorRequest.getPicColor();
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(pictureService.searchPictureByColor(spaceId, picColor, loginUser));
     }
 
 
