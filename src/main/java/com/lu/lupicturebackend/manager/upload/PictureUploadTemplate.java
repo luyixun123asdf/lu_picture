@@ -35,11 +35,11 @@ public abstract class PictureUploadTemplate {
      */
     public UploadPictureResult uploadPictureFile(Object inputResource, String uploadPathPrefix) {
         // 校验文件
-        String preFxi = validPicture(inputResource); //　url时会使用prefix
+        validPicture(inputResource); //　url时会使用prefix
         //　上传图片
 
         String uuid = UUID.randomUUID().toString();
-        String originalFilename = getOriginalFilename(inputResource, preFxi); // 完整的文件名
+        String originalFilename = getOriginalFilename(inputResource); // 完整的文件名
         String uploadFileName = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, FileUtil.getSuffix(originalFilename));
         String uploadPath = String.format("/%s/%s", uploadPathPrefix, uploadFileName);
         try {
@@ -142,7 +142,7 @@ public abstract class PictureUploadTemplate {
      * @param inputResource
      * @return
      */
-    protected abstract String getOriginalFilename(Object inputResource, String prefix);
+    protected abstract String getOriginalFilename(Object inputResource);
 
     /**
      * 校验输入源

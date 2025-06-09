@@ -1,10 +1,14 @@
 package com.lu.lupicturebackend.controller;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.lu.lupicturebackend.annotation.AuthCheck;
+import com.lu.lupicturebackend.api.aliyunai.AliYunAiApi;
+import com.lu.lupicturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.lu.lupicturebackend.api.aliyunai.model.GetOutPaintingTaskResponse;
 import com.lu.lupicturebackend.api.imagesearch.ImageSearchApiFacade;
 import com.lu.lupicturebackend.api.imagesearch.model.ImageSearchResult;
 import com.lu.lupicturebackend.common.BaseResponse;
@@ -31,6 +35,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
@@ -45,21 +50,25 @@ public class PictureController {
 
     private final UserService userService;
 
-    private final StringRedisTemplate stringRedisTemplate;
+//    private final StringRedisTemplate stringRedisTemplate;
 
     /**
      * 本地缓存caffeine
      */
-    private final Cache<String, String> LOCAL_CACHE =
-            Caffeine.newBuilder().initialCapacity(1024)
-                    .maximumSize(10000L) // 最大1w条
-                    // 缓存 5 分钟移除
-                    .expireAfterWrite(5L, TimeUnit.MINUTES)
-                    .build();
-
-    private final CacheManager cacheManager;
+//    private final Cache<String, String> LOCAL_CACHE =
+//            Caffeine.newBuilder().initialCapacity(1024)
+//                    .maximumSize(10000L) // 最大1w条
+//                    // 缓存 5 分钟移除
+//                    .expireAfterWrite(5L, TimeUnit.MINUTES)
+//                    .build();
+//
+//    private final CacheManager cacheManager;
 
     private final SpaceService spaceService;
+
+
+    @Resource
+    private AliYunAiApi aliYunAiApi;
 
 
     /**
@@ -329,5 +338,40 @@ public class PictureController {
         return ResultUtils.success(pictureService.searchPictureByColor(spaceId, picColor, loginUser));
     }
 
+    /**
+     * 批量编辑图片
+     */
+    @PostMapping("/edit/batch")
+    public BaseResponse<Boolean> editPictureBatch(@RequestBody PictureEditByBatchRequest pictureEditBatchRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureEditBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.editPictureByBatch(pictureEditBatchRequest, loginUser);
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * 创建 AI 扩图任务
+     */
+    @PostMapping("/out_painting/create_task")
+    public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(
+            @RequestBody CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
+            HttpServletRequest request) {
+        if (createPictureOutPaintingTaskRequest == null || createPictureOutPaintingTaskRequest.getPictureId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        CreateOutPaintingTaskResponse response = pictureService.createPictureOutPaintingTask(createPictureOutPaintingTaskRequest, loginUser);
+        return ResultUtils.success(response);
+    }
+
+    /**
+     * 查询 AI 扩图任务
+     */
+    @GetMapping("/out_painting/get_task")
+    public BaseResponse<GetOutPaintingTaskResponse> getPictureOutPaintingTask(String taskId) {
+        ThrowUtils.throwIf(StrUtil.isBlank(taskId), ErrorCode.PARAMS_ERROR);
+        GetOutPaintingTaskResponse task = aliYunAiApi.getOutPaintingTask(taskId);
+        return ResultUtils.success(task);
+    }
 
 }

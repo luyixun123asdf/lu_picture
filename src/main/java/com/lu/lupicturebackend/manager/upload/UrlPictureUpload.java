@@ -55,9 +55,9 @@ public class UrlPictureUpload extends PictureUploadTemplate {
     }
 
     @Override
-    protected String getOriginalFilename(Object inputResource, String preFix) {
+    protected String getOriginalFilename(Object inputResource) {
         String fileUrl = (String) inputResource;
-        return FileUtil.mainName(fileUrl) + "." + preFix;
+        return FileUtil.mainName(fileUrl);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class UrlPictureUpload extends PictureUploadTemplate {
 
         // 校验url格式
         try {
-            new URL(fileUrl);
+            URL url = new URL(fileUrl);
         } catch (MalformedURLException e) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "url格式错误");
         }

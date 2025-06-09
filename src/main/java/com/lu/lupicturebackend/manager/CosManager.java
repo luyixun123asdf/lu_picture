@@ -2,6 +2,7 @@ package com.lu.lupicturebackend.manager;
 
 import cn.hutool.core.io.FileUtil;
 import com.lu.lupicturebackend.config.CosClientConfig;
+import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
 import com.qcloud.cos.COSClient;
@@ -51,39 +52,43 @@ public class CosManager {
      * @return
      */
     public PutObjectResult putPictureObject(String key, File file) {
-        if (file == null) {
-            ThrowUtils.throwIf(true, ErrorCode.NOT_FOUND_ERROR, "上传文件为空");
+        try {
+            if (file == null) {
+                ThrowUtils.throwIf(true, ErrorCode.NOT_FOUND_ERROR, "上传文件为空");
+            }
+            PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key, file);
+            List<PicOperations.Rule> rules = new ArrayList<>();
+            // 返回图片信息
+            PicOperations picOperations = new PicOperations();
+            picOperations.setIsPicInfo(1);
+
+            if (file.length() > 2 * 1024) {
+                // 2、缩略图规则
+                PicOperations.Rule thumbnailRule = new PicOperations.Rule();
+                thumbnailRule.setBucket(cosClientConfig.getBucket());
+                thumbnailRule.setFileId(FileUtil.mainName(key) + "_thumbnail" + FileUtil.getSuffix(key));
+                thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>", 128, 128));
+                rules.add(thumbnailRule);
+            }
+            // 压缩图片为webp格式
+            PicOperations.Rule rule = new PicOperations.Rule();
+            // 获取名字
+            String webKey = FileUtil.mainName(key) + ".webp";
+            // 1\设置压缩规则
+            rule.setRule("imageMogr2/format/webp");
+            rule.setBucket(cosClientConfig.getBucket());
+            rule.setFileId(webKey);
+            // 设置
+            rules.add(rule);
+
+            // 构造参数
+            picOperations.setRules(rules);
+            putObjectRequest.setPicOperations(picOperations);
+
+            return cosClient.putObject(putObjectRequest);
+        }catch (Exception e){
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,e.getMessage());
         }
-        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key, file);
-        List<PicOperations.Rule> rules = new ArrayList<>();
-        // 返回图片信息
-        PicOperations picOperations = new PicOperations();
-        picOperations.setIsPicInfo(1);
-
-        if (file.length() > 2 * 1024) {
-            // 2、缩略图规则
-            PicOperations.Rule thumbnailRule = new PicOperations.Rule();
-            thumbnailRule.setBucket(cosClientConfig.getBucket());
-            thumbnailRule.setFileId(FileUtil.mainName(key) + "_thumbnail" + FileUtil.getSuffix(key));
-            thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>", 128, 128));
-            rules.add(thumbnailRule);
-        }
-        // 压缩图片为webp格式
-        PicOperations.Rule rule = new PicOperations.Rule();
-        // 获取名字
-        String webKey = FileUtil.mainName(key) + ".webp";
-        // 1\设置压缩规则
-        rule.setRule("imageMogr2/format/webp");
-        rule.setBucket(cosClientConfig.getBucket());
-        rule.setFileId(webKey);
-        // 设置
-        rules.add(rule);
-
-        // 构造参数
-        picOperations.setRules(rules);
-        putObjectRequest.setPicOperations(picOperations);
-
-        return cosClient.putObject(putObjectRequest);
 
     }
 
@@ -130,8 +135,9 @@ public class CosManager {
 //            // 生成访问链接
 //            return "https://" + bucketName + ".cos." + cosClient.getClientConfig().getRegion().getRegionName()
 //                    + ".myqcloud.com/" + key;
-        } finally {
-            cosClient.shutdown();
+        } catch (Exception e){
+
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,e.getMessage());
         }
     }
 

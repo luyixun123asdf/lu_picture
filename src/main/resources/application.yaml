@@ -56,5 +56,8 @@ knife4j:
         api-rule-resources:
           - com.lu.lupicturebackend.controller
 
+aliyunAi:
+  apikey: ${aliyunAi.apikey}
+
 
 

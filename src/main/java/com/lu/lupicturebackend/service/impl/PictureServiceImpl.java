@@ -8,6 +8,9 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lu.lupicturebackend.api.aliyunai.AliYunAiApi;
+import com.lu.lupicturebackend.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.lu.lupicturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
@@ -27,7 +30,6 @@ import com.lu.lupicturebackend.service.PictureService;
 import com.lu.lupicturebackend.mapper.PictureMapper;
 import com.lu.lupicturebackend.service.SpaceService;
 import com.lu.lupicturebackend.service.UserService;
-import com.lu.lupicturebackend.utils.ColorSimilarUtils;
 import com.lu.lupicturebackend.utils.ColorTransformer;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -78,6 +80,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     private TransactionTemplate transactionTemplate;
+
+    @Resource
+    private AliYunAiApi aliYunAiApi;
 
     /**
      * 上传图片
@@ -626,6 +631,105 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 .map(PictureVO::objToVo)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * @param pictureEditByBatchRequest
+     * @param loginUser
+     */
+
+    @Override
+    public void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser) {
+        // 1、校验参数
+        ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        List<Long> pictureIdList = pictureEditByBatchRequest.getPictureIdList();
+        Long spaceId = pictureEditByBatchRequest.getSpaceId();
+        List<String> tags = pictureEditByBatchRequest.getTags();
+        String category = pictureEditByBatchRequest.getCategory();
+        if (spaceId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.PARAMS_ERROR);
+        // 2、空间权限
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+        if (!space.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无空间权限");
+        }
+        // 3、指定图片是否存在
+        List<Picture> list = this.lambdaQuery()
+                .in(Picture::getId, pictureIdList)
+                .eq(Picture::getSpaceId, spaceId)
+                .list();
+        if (list == null || list.size() == 0) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        }
+        // 4、更新分类和标签
+        list.forEach(picture -> {
+            if (CollUtil.isNotEmpty(tags)) {
+                picture.setTags(JSONUtil.toJsonStr(tags));
+            }
+            if (StrUtil.isNotEmpty(category)) {
+                picture.setCategory(category);
+            }
+        });
+        // 批量重命名
+        String nameRule = pictureEditByBatchRequest.getNameRule();
+        fillPictureNameRule(list, nameRule);
+        // 5、更新数据库
+        boolean update = this.updateBatchById(list);
+        ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR);
+
+
+    }
+
+    /**
+     * nameRule 格式：图片{序号}
+     *
+     * @param list
+     * @param nameRule
+     */
+
+    private void fillPictureNameRule(List<Picture> list, String nameRule) {
+        if (StrUtil.isBlank(nameRule) || CollUtil.isEmpty(list)) {
+            return;
+        }
+        long count = 1;
+        try {
+            for (Picture picture : list) {
+                String name = nameRule.replaceAll("\\{序号}", String.valueOf(count));
+                picture.setName(name);
+                count++;
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "批量重命名失败");
+        }
+
+
+    }
+
+    /**
+     * 创建图像扩展任务请求
+     */
+    @Override
+    public CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser) {
+        // 1、校验参数
+        ThrowUtils.throwIf(createPictureOutPaintingTaskRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null, ErrorCode.PARAMS_ERROR, "图片id不能为空");
+        Picture picture = Optional.ofNullable(this.getById(pictureId)).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ERROR, "图片不存在"));
+        // 权限校验
+        checkPictureAuth(picture, loginUser);
+        CreateOutPaintingTaskRequest createOutPaintingTaskRequest = new CreateOutPaintingTaskRequest();
+        CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+        input.setImageUrl(picture.getUrl());
+        createOutPaintingTaskRequest.setInput(input);
+        createOutPaintingTaskRequest.setParameters(createPictureOutPaintingTaskRequest.getParameters());
+
+        // 创建任务
+        return aliYunAiApi.createOutPaintingTask(createOutPaintingTaskRequest);
+    }
+
+
 
 }
 
