@@ -34,7 +34,7 @@ public interface SpaceService extends IService<Space> {
      *
      * @param space
      */
-    public void validSpace(Space space,boolean add);
+    public void validSpace(Space space, boolean add);
 
     /**
      * 获取空间查询
@@ -63,14 +63,14 @@ public interface SpaceService extends IService<Space> {
     Page<SpaceVO> getSpaceVOPage(Page<Space> spacePage, HttpServletRequest request);
 
     /**
-     *
      * 根据空间级别填充空间信息
+     *
      * @param space
      */
     void fillSpaceBySpaceLevel(Space space);
 
 
-
+    void checkSpaceAuth(Space space, User loginUser);
 
 
 }

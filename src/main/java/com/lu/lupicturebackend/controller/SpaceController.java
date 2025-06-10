@@ -74,9 +74,7 @@ public class SpaceController {
         // 获取用户
         User loginUser = userService.getLoginUser(request);
         // 只有管理员或者空间上传者才允许删除
-        if (!oldSpace.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            ThrowUtils.throwIf(true, ErrorCode.NO_AUTH_ERROR);
-        }
+        spaceService.checkSpaceAuth(oldSpace, loginUser);
         // 操作数据库
         boolean b = spaceService.removeById(id);
         ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR,  "删除失败");
@@ -190,9 +188,7 @@ public class SpaceController {
         Space oldSpace = spaceService.getById(spaceEditRequest.getId());
         //  只有管理员或者空间上传者才允许修改
         ThrowUtils.throwIf(oldSpace == null, ErrorCode.NO_AUTH_ERROR);
-        if (!oldSpace.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            ThrowUtils.throwIf(true, ErrorCode.NO_AUTH_ERROR);
-        }
+        spaceService.checkSpaceAuth(oldSpace, loginUser);
         // 操作数据库
         boolean result = spaceService.updateById(space);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
