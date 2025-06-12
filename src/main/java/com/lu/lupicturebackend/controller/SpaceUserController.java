@@ -1,19 +1,13 @@
 package com.lu.lupicturebackend.controller;
 
-
 import com.lu.lupicturebackend.common.BaseResponse;
 import com.lu.lupicturebackend.common.DeleteRequest;
 import com.lu.lupicturebackend.common.ResultUtils;
-
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
-
-import com.lu.lupicturebackend.model.dto.space.SpaceEditRequest;
 import com.lu.lupicturebackend.model.dto.spaceuser.SpaceUserAddRequest;
 import com.lu.lupicturebackend.model.dto.spaceuser.SpaceUserEditRequest;
 import com.lu.lupicturebackend.model.dto.spaceuser.SpaceUserQueryRequest;
-
-import com.lu.lupicturebackend.model.entity.Space;
 import com.lu.lupicturebackend.model.entity.SpaceUser;
 import com.lu.lupicturebackend.model.entity.User;
 import com.lu.lupicturebackend.model.vo.SpaceUserVO;
@@ -24,7 +18,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -126,5 +119,20 @@ public class SpaceUserController {
         boolean result = spaceUserService.updateById(spaceUser);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 查询加入我加入的团队列表
+     */
+    @PostMapping("/list/my")
+    public BaseResponse<List<SpaceUserVO>> listMyTeamSpace(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_FOUND_ERROR);
+        SpaceUserQueryRequest spaceUserQueryRequest = new SpaceUserQueryRequest();
+        spaceUserQueryRequest.setUserId(loginUser.getId());
+        List<SpaceUser> spaceUserList = spaceUserService.list(
+                spaceUserService.getQueryWrapper(spaceUserQueryRequest)
+        );
+        return ResultUtils.success(spaceUserService.getSpaceUserVOList(spaceUserList));
     }
 }
