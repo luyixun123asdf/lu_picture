@@ -8,6 +8,7 @@ import com.lu.lupicturebackend.constant.UserConstant;
 import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
+import com.lu.lupicturebackend.manager.auth.StpKit;
 import com.lu.lupicturebackend.model.dto.user.UserQueryRequest;
 import com.lu.lupicturebackend.model.entity.User;
 import com.lu.lupicturebackend.model.vo.LoginUserVO;
@@ -102,6 +103,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         log.info("用户登录成功");
         // 4. 封装用户信息
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
+        // 记录用户登录态到 Sa-token，便于空间鉴权时使用，注意保证该用户信息与 SpringSession 中的信息过期时间一致
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(UserConstant.USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
 
@@ -174,8 +178,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
-        if (userQueryRequest == null){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,  "请求参数为空");
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
         }
         Long id = userQueryRequest.getId();
         String userName = userQueryRequest.getUserName();
@@ -188,22 +192,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
         queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
         queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
-        queryWrapper.orderBy(StrUtil.isNotBlank(sortField),"ascend".equals(sortOrder),sortField);
+        queryWrapper.orderBy(StrUtil.isNotBlank(sortField), "ascend".equals(sortOrder), sortField);
 
         return queryWrapper;
     }
 
     /**
      * 用户 是否为管理员
+     *
      * @param user
      * @return
      */
     @Override
     public boolean isAdmin(User user) {
-        if (user == null){
-             return false;
+        if (user == null) {
+            return false;
         }
-        return UserConstant.ADMIN_ROLE.equals( user.getUserRole());
+        return UserConstant.ADMIN_ROLE.equals(user.getUserRole());
     }
 }
 
