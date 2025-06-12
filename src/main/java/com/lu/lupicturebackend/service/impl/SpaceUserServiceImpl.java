@@ -50,11 +50,10 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
      * 添加空间用户
      *
      * @param spaceUserAddRequest
-     * @param loginUser
      * @return
      */
     @Override
-    public long addSpaceUser(SpaceUserAddRequest spaceUserAddRequest, User loginUser) {
+    public long addSpaceUser(SpaceUserAddRequest spaceUserAddRequest) {
         // 参数校验
         ThrowUtils.throwIf(spaceUserAddRequest == null, ErrorCode.PARAMS_ERROR);
         SpaceUser spaceUser = new SpaceUser();

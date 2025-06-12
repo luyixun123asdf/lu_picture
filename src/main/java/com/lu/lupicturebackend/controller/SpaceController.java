@@ -55,6 +55,7 @@ public class SpaceController {
         long l = spaceService.addSpace(spaceAddRequest, loginUser);
         return ResultUtils.success(l);
     }
+
     /**
      * 空间删除功能
      *
@@ -77,7 +78,7 @@ public class SpaceController {
         spaceService.checkSpaceAuth(oldSpace, loginUser);
         // 操作数据库
         boolean b = spaceService.removeById(id);
-        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR,  "删除失败");
+        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR, "删除失败");
         pictureService.deleteSpaceAndPicture(id, loginUser);
         return ResultUtils.success(true);
     }
@@ -99,7 +100,7 @@ public class SpaceController {
         BeanUtils.copyProperties(spaceUpdateRequest, space);
 
         // 数据校验
-        spaceService.validSpace(space,false);
+        spaceService.validSpace(space, false);
         // 自动数据填充
         spaceService.fillSpaceBySpaceLevel(space);
         // 操作数据库
@@ -136,7 +137,7 @@ public class SpaceController {
     }
 
     /**
-     * z45
+     *
      * 分页获取空间列表（仅管理员可用）
      */
     @PostMapping("/list/page")
@@ -180,7 +181,7 @@ public class SpaceController {
         // 设置编辑时间
         space.setEditTime(new Date());
         // 数据校验
-        spaceService.validSpace(space,false);
+        spaceService.validSpace(space, false);
         // 数据填充
         spaceService.fillSpaceBySpaceLevel(space);
         // 权限校验
@@ -197,10 +198,11 @@ public class SpaceController {
 
     /**
      * 获取空间级别列表，便于前端展示
+     *
      * @return
      */
     @GetMapping("/list/level")
-    public  BaseResponse<List<SpaceLevel>> listSpaceLevel() {
+    public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
         List<SpaceLevel> spaceLevelList = Arrays.stream(SpaceLevelEnum.values())
                 .map(spaceLevelEnum -> new SpaceLevel(spaceLevelEnum.getValue(),
                         spaceLevelEnum.getText(),
