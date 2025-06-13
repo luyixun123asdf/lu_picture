@@ -21,10 +21,11 @@ import com.lu.lupicturebackend.service.SpaceService;
 import com.lu.lupicturebackend.service.SpaceUserService;
 import com.lu.lupicturebackend.mapper.SpaceUserMapper;
 import com.lu.lupicturebackend.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
@@ -38,13 +39,15 @@ import java.util.stream.Collectors;
  * @createDate 2025-06-11 11:00:07
  */
 @Service
-@RequiredArgsConstructor
 public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser>
         implements SpaceUserService {
 
-    private final SpaceService spaceService;
+    @Lazy
+    @Resource
+    private  SpaceService spaceService;
 
-    private final UserService userService;
+    @Resource
+    private  UserService userService;
 
     /**
      * 添加空间用户

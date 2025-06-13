@@ -18,6 +18,7 @@ import com.lu.lupicturebackend.constant.UserConstant;
 import com.lu.lupicturebackend.exception.BusinessException;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
+import com.lu.lupicturebackend.manager.auth.SpaceUserAuthManager;
 import com.lu.lupicturebackend.manager.auth.StpKit;
 import com.lu.lupicturebackend.manager.auth.annotaion.SaSpaceCheckPermission;
 import com.lu.lupicturebackend.manager.auth.model.SpaceUserPermissionConstant;
@@ -34,6 +35,7 @@ import com.lu.lupicturebackend.service.SpaceService;
 import com.lu.lupicturebackend.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,6 +74,8 @@ public class PictureController {
 
     @Resource
     private AliYunAiApi aliYunAiApi;
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
 
     /**
@@ -168,19 +172,24 @@ public class PictureController {
     public BaseResponse<PictureVO> getPictureVOById(long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Picture picture = pictureService.getById(id);
-
+        ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
         // 已经改为注解鉴权
 //        pictureService.checkPictureAuth(picture, loginUser);
-        if (picture.getSpaceId()!=null){
+        Space space = null;
+        if (picture.getSpaceId() != null) {
             boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
-            ThrowUtils.throwIf(!hasPermission, ErrorCode.NO_AUTH_ERROR,  "没有权限访问该图片");
+            ThrowUtils.throwIf(!hasPermission, ErrorCode.NO_AUTH_ERROR, "没有权限访问该图片");
+            space = spaceService.getById(picture.getSpaceId());
+            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
             //　空间权限校验
 //            User loginUser = userService.getLoginUser(request);
         }
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, userService.getLoginUser(request));
+        PictureVO pictureVO = pictureService.getPictureVO(picture, request);
+        pictureVO.setPermissionList(permissionList);
 
 
-        ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
-        return ResultUtils.success(pictureService.getPictureVO(picture, request));
+        return ResultUtils.success(pictureVO);
     }
 
     /**
@@ -269,7 +278,7 @@ public class PictureController {
         } else {
 
             boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
-            ThrowUtils.throwIf(!hasPermission, ErrorCode.NO_AUTH_ERROR,  "没有权限访问该图片");
+            ThrowUtils.throwIf(!hasPermission, ErrorCode.NO_AUTH_ERROR, "没有权限访问该图片");
             // 私有空间
 //            User loginUser = userService.getLoginUser(request);
 //            Space space = spaceService.getById(spaceId);

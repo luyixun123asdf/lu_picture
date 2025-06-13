@@ -9,6 +9,7 @@ import com.lu.lupicturebackend.common.ResultUtils;
 import com.lu.lupicturebackend.constant.UserConstant;
 import com.lu.lupicturebackend.exception.ErrorCode;
 import com.lu.lupicturebackend.exception.ThrowUtils;
+import com.lu.lupicturebackend.manager.auth.SpaceUserAuthManager;
 import com.lu.lupicturebackend.model.dto.space.*;
 import com.lu.lupicturebackend.model.entity.Space;
 import com.lu.lupicturebackend.model.entity.User;
@@ -41,6 +42,8 @@ public class SpaceController {
     private final UserService userService;
 
     private final PictureService pictureService;
+
+    private final SpaceUserAuthManager spaceUserAuthManager;
 
     /**
      * 添加空间
@@ -119,7 +122,11 @@ public class SpaceController {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
-        return ResultUtils.success(spaceService.getSpaceVO(space, request));
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, userService.getLoginUser(request));
+        SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        // 设置权限
+        spaceVO.setPermissionList(permissionList);
+        return ResultUtils.success(spaceVO);
     }
 
     /**

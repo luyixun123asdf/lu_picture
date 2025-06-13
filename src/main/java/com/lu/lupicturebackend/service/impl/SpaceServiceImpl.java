@@ -25,6 +25,7 @@ import com.lu.lupicturebackend.service.SpaceUserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -52,7 +53,11 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private SpaceUserService spaceUserService;
-
+        // 可选。为了方便部署，注释掉分表
+//    @Resource
+//    @Lazy
+//    private DynamicShardingManager dynamicShardingManager;
+//
 
     /**
      * 创建空间
@@ -119,8 +124,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                         spaceUser.setUserId(userId);
                         spaceUser.setSpaceRole(SpaceRoleEnum.ADMIN.getValue());
                         result = spaceUserService.save(spaceUser);
-                        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR,"创建成员记录失败");
+                        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "创建成员记录失败");
                     }
+                    // 创建分表（仅对团队空间生效）
+//                    dynamicShardingManager.createSpacePictureTable(space);
                     return space.getId();
                 } finally {
                     // 防止内存泄漏
