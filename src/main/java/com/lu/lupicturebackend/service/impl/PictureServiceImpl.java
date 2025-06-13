@@ -531,8 +531,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             ThrowUtils.throwIf(true, ErrorCode.NO_AUTH_ERROR);
         }
-        // 校验权限
-        this.checkPictureAuth(oldPicture, loginUser);
+        // 已经改为注解鉴权
+//        this.checkPictureAuth(oldPicture, loginUser);
         // 开启事务
         transactionTemplate.execute(status -> {
             // 操作数据库
@@ -569,8 +569,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             ThrowUtils.throwIf(true, ErrorCode.NO_AUTH_ERROR);
         }
-        // 校验权限
-        this.checkPictureAuth(oldPicture, loginUser);
+        // 已经改为注解鉴权
+//        this.checkPictureAuth(oldPicture, loginUser);
         // 补充审核参数
         this.fillReviewParams(picture, loginUser);
         // 操作数据库
@@ -717,8 +717,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
         ThrowUtils.throwIf(pictureId == null, ErrorCode.PARAMS_ERROR, "图片id不能为空");
         Picture picture = Optional.ofNullable(this.getById(pictureId)).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ERROR, "图片不存在"));
-        // 权限校验
-        checkPictureAuth(picture, loginUser);
+        // 已经改为注解鉴权
+//        checkPictureAuth(picture, loginUser);
         CreateOutPaintingTaskRequest createOutPaintingTaskRequest = new CreateOutPaintingTaskRequest();
         CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
         input.setImageUrl(picture.getUrl());
