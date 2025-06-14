@@ -10,7 +10,6 @@ import com.lu.lupicturebackend.manager.websocket.model.PictureEditMessageTypeEnu
 import com.lu.lupicturebackend.manager.websocket.model.PictureEditRequestMessage;
 import com.lu.lupicturebackend.manager.websocket.model.PictureEditResponseMessage;
 import com.lu.lupicturebackend.model.entity.User;
-import com.lu.lupicturebackend.model.vo.UserVO;
 import com.lu.lupicturebackend.service.UserService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -23,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.lu.lupicturebackend.manager.websocket.model.PictureEditMessageTypeEnum.ENTER_EDIT;
 
 @Component
 public class PictureEditHandler extends TextWebSocketHandler {
@@ -145,7 +143,28 @@ public class PictureEditHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        super.afterConnectionClosed(session, status);
+        Map<String, Object> attributes = session.getAttributes();
+        Long pictureId = (Long) attributes.get("pictureId");
+
+        User user = (User) attributes.get("user");
+        // 移除当前用户的编辑状态
+        handleExitEditMessage(null, session, user, pictureId);
+
+        // 删除会话
+        Set<WebSocketSession> sessionSet = pictureSessions.get(pictureId);
+        if (sessionSet != null) {
+            sessionSet.remove(session);
+            if (sessionSet.isEmpty()) {
+                pictureSessions.remove(pictureId);
+            }
+        }
+        // 响应
+        PictureEditResponseMessage pictureEditResponseMessage = new PictureEditResponseMessage();
+        pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.INFO.getValue());
+        String message = String.format("%s离开编辑", user.getUserName());
+        pictureEditResponseMessage.setMessage(message);
+        pictureEditResponseMessage.setUser(userService.getUserVO(user));
+        broadcastToPicture(pictureId, pictureEditResponseMessage);
     }
 
     /**
