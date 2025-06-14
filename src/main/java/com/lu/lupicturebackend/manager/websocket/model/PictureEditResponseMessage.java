@@ -1,4 +1,4 @@
-package com.lu.lupicturebackend.manager.websocket;
+package com.lu.lupicturebackend.manager.websocket.model;
 
 import com.lu.lupicturebackend.model.vo.UserVO;
 import lombok.AllArgsConstructor;
